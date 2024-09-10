@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
 namespace XyzTanks;
 internal class Game
@@ -24,6 +25,8 @@ internal class Game
     private LevelMap _map;
     private Tank _tank;
 
+    private List<Tank> _enemyTanks = new List<Tank>();
+
     private Vector2 _lastTankPosition;
 
     private List<Projectile> _projectiles = new List<Projectile>();
@@ -42,19 +45,36 @@ internal class Game
 
         _inputReader.InputActionCalled += OnInputActionCalled;
 
-        _map = _levelLoader.LoadLevel("Levels/level1.txt");
+        LoadLevel();
+    }
 
-        _renderer.SetMap(_map);
+    private void LoadLevel()
+    {
+        if (File.Exists($"Levels/level{_level}.txt"))
+        {
+            _projectiles.Clear();
+            _map = _levelLoader.LoadLevel($"Levels/level{_level}.txt");
+            _renderer.SetMap(_map);
+            _tank = new Tank();
+            _tank.Position = _map.GetRandomTankPosition();
+            _renderer.RenderWalls();
 
-        _tank = new Tank();
-        _tank.Position = _map.GetRandomTankPosition();
+            for(int enemyCount = 0; enemyCount < _level; enemyCount++)
+            {
+                var newEnemyTank = new Tank();
+                newEnemyTank.Position = _map.GetRandomTankPosition();
+                _enemyTanks.Add(newEnemyTank);
+            }
+        }
+        else
+        {
+            _running = false;
+        }
     }
 
     public async Task RunAsync()
     {
         _running = true;
-
-        _renderer.RenderWalls();
 
         while (_running)
         {
@@ -67,7 +87,7 @@ internal class Game
             _lastUpdateTime = currentTime;
         }
 
-        _showTextState.RenderGameOverScreen();
+        _showTextState.RenderGameOverScreen(_tank.Health > 0);
 
         await Task.CompletedTask;
     }
@@ -141,14 +161,50 @@ internal class Game
 
         UpdateProjectiles();
         UpdatePlayerTank();
+        UpdateEnemiesTanks();
+
+        if(_enemyTanks.Count == 0)
+        {
+            _level++;
+            LoadLevel();
+        }
 
         _renderer.RenderGameInfo(_level, _tank.Health);
 
         _secondsFromLastUpdate = 0;
     }
 
+    private void UpdateEnemiesTanks()
+    {
+        var listEnemyToDispose = new List<Tank>();
+        var listProjectilesToRemove = new List<Projectile>();
+
+        foreach(var enemy in _enemyTanks)
+        {
+            var lastEnemyTankPosition = enemy.Position;
+            var lastEnemyTankOrientation = enemy.Orientation;
+
+            _renderer.EraseAtMapCoordinate(lastEnemyTankPosition);
+            _renderer.DrawTank(enemy.Position, enemy.Orientation);
+
+            if (_projectiles.Any(x => x.Position == enemy.Position))
+            {
+                enemy.Health--;
+                listProjectilesToRemove.Add(_projectiles.First(x => x.Position == enemy.Position));
+                if (enemy.Health <= 0)
+                {
+                    listEnemyToDispose.Add(enemy);
+                }
+            }
+        }
+        _projectiles.RemoveAll(listProjectilesToRemove.Contains);
+        _enemyTanks.RemoveAll(listEnemyToDispose.Contains);
+    }
+
     private void UpdatePlayerTank()
     {
+        var listProjectilesToRemove = new List<Projectile>();
+
         if (_lastTankPosition != _tank.Position
             || _lastTankOrientation != _tank.Orientation)
         {
@@ -159,11 +215,14 @@ internal class Game
         if (_projectiles.Any(x => x.Position == _tank.Position))
         {
             _tank.Health--;
+            listProjectilesToRemove.Add(_projectiles.First(x => x.Position == _tank.Position));
+
             if (_tank.Health <= 0)
             {
                 _running = false;
             }
         }
+        _projectiles.RemoveAll(listProjectilesToRemove.Contains);
     }
 
     private void UpdateProjectiles()

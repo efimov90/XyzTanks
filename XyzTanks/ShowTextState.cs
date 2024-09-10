@@ -1,9 +1,16 @@
 ﻿namespace XyzTanks;
 internal class ShowTextState
 {
-    public void RenderGameOverScreen()
+    public void RenderGameOverScreen(bool win)
     {
         Console.Clear();
-        Console.WriteLine("Game Over");
+        if(win)
+        {
+            Console.WriteLine("You win!");
+        }
+        else
+        {
+            Console.WriteLine("Game Over!");
+        }
     }
 }
