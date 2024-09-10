@@ -101,28 +101,32 @@ internal class Game
         {
             case InputAction.Up:
                 _tank.Orientation = Orientation.Up;
-                if (_map.IsWalkableAtCoordinate(_tank.Upper))
+                if (_map.IsWalkableAtCoordinate(_tank.Upper)
+                    && !_enemyTanks.Any(et => et.Position == _tank.Upper))
                 {
                     _tank.MoveUp();
                 }
                 break;
             case InputAction.Down:
                 _tank.Orientation = Orientation.Down;
-                if (_map.IsWalkableAtCoordinate(_tank.Lower))
+                if (_map.IsWalkableAtCoordinate(_tank.Lower)
+                    && !_enemyTanks.Any(et => et.Position == _tank.Lower))
                 {
                     _tank.MoveDown();
                 }
                 break;
             case InputAction.Left:
                 _tank.Orientation = Orientation.Left;
-                if (_map.IsWalkableAtCoordinate(_tank.Lefter))
+                if (_map.IsWalkableAtCoordinate(_tank.Lefter)
+                    && !_enemyTanks.Any(et => et.Position == _tank.Lefter))
                 {
                     _tank.MoveLeft();
                 }
                 break;
             case InputAction.Right:
                 _tank.Orientation = Orientation.Right;
-                if (_map.IsWalkableAtCoordinate(_tank.Righter))
+                if (_map.IsWalkableAtCoordinate(_tank.Righter)
+                    && !_enemyTanks.Any(et => et.Position == _tank.Righter))
                 {
                     _tank.MoveRight();
                 }
