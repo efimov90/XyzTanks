@@ -36,6 +36,10 @@ internal partial class ConsoleInputReader : IInputReader
                     InputActionCalled?.Invoke(this, new InputEventArgs(InputAction.Right));
                     break;
 
+                case ConsoleKey.Spacebar:
+                    InputActionCalled?.Invoke(this, new InputEventArgs(InputAction.Fire));
+                    break;
+
                 case ConsoleKey.Escape:
                     InputActionCalled?.Invoke(this, new InputEventArgs(InputAction.Exit));
                     break;

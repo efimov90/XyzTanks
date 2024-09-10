@@ -1,6 +1,9 @@
-﻿namespace XyzTanks;
+﻿using System.Numerics;
+
+namespace XyzTanks;
 internal class Game
 {
+    private readonly LevelLoader _levelLoader;
     private readonly IInputReader _inputReader;
     private readonly IRenderer _renderer;
 
@@ -13,17 +16,33 @@ internal class Game
     private double _tickSeconds = 1d;
     private double _secondsFromLastUpdate = 0d;
 
+
+
     private DateTime _lastUpdateTime = DateTime.Now;
     private int _level = 1;
+    private LevelMap _map;
     private Tank _tank;
 
-    public Game(IInputReader inputReader, IRenderer renderer, ShowTextState showTextState)
+    private int _fieldSizeX = 13;
+    private int _fieldSizeY = 13;
+    private Vector2 _lastTankPosition;
+
+    public Game(
+        LevelLoader levelLoader,
+        IInputReader inputReader,
+        IRenderer renderer,
+        ShowTextState showTextState)
     {
+        _levelLoader = levelLoader;
         _inputReader = inputReader ?? throw new ArgumentNullException(nameof(inputReader));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
         _showTextState = showTextState ?? throw new ArgumentNullException(nameof(showTextState));
 
         _inputReader.InputActionCalled += OnInputActionCalled;
+
+        _map = _levelLoader.LoadLevel("Levels/level1.txt");
+
+        _renderer.SetMap(_map);
 
         _tank = new Tank();
     }
@@ -31,6 +50,8 @@ internal class Game
     public async Task RunAsync()
     {
         _running = true;
+
+        _renderer.RenderWalls();
 
         while (_running)
         {
@@ -50,6 +71,8 @@ internal class Game
 
     private void OnInputActionCalled(object? sender, InputEventArgs e)
     {
+        _lastTankPosition = _tank.Position;
+
         switch (e.InputAction)
         {
             case InputAction.Up:
@@ -85,7 +108,11 @@ internal class Game
 
         _inputReader.Update();
 
-        _renderer.DrawTank(_tank.Position, _tank.Orientation);
+        if (_lastTankPosition != _tank.Position)
+        {
+            _renderer.EraseAtMapCoordinate(_lastTankPosition);
+            _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
+        }
 
         _renderer.RenderGameInfo(_level);
 

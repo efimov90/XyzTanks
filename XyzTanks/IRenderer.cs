@@ -3,9 +3,10 @@
 namespace XyzTanks;
 public interface IRenderer
 {
-    void DrawTank(Vector2 position, TankOrientation tankOrientation);
-    void EraseAt(Vector2 coordinate);
+    void DrawTank(Vector2 position, TankOrientation tankOrientation, bool playerTank = false);
+    void EraseAtMapCoordinate(Vector2 coordinate);
     void RenderCoordinates(Vector2 coordinate);
     void RenderGameInfo(int level);
-    void RenderWalls(int height, int width);
+    void RenderWalls();
+    void SetMap(LevelMap map);
 }

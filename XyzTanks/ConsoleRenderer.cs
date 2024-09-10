@@ -6,7 +6,11 @@ internal class ConsoleRenderer : IRenderer, IDisposable
     private const char _wallCharacter = '█';
     private const char _wallDamagedCharacter = '▒';
     private const char _emptyCharacter = ' ';
+    private const char _riverCharacter = '~';
     private const char _projectileCharacter = '○';
+
+    private readonly ConsoleColor _playerTankColor = ConsoleColor.Green;
+    private readonly ConsoleColor _enemyTankColor = ConsoleColor.White;
 
     private const int _tileSizeX = 4;
     private const int _tileSizeY = 2;
@@ -35,27 +39,45 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         ['T', '╚', '═', '╝']
     ];
 
+    private LevelMap _map;
+
     public ConsoleRenderer()
     {
         Console.CursorVisible = false;
     }
 
-    public void RenderWalls(int height, int width)
+    public void RenderWalls()
     {
         Console.SetCursorPosition(0, 0);
-        Console.Write(new string(_wallCharacter, width));
 
-        for (int y = 1; y < height - 1; y++)
+        for (var y = 0; y < LevelMap.LevelHeight * _tileSizeY; y++)
         {
             Console.SetCursorPosition(0, y);
-            Console.Write(_wallCharacter);
-            Console.SetCursorPosition(width - 1, y);
-            Console.Write(_wallCharacter);
-        }
 
-        Console.SetCursorPosition(0, height - 1);
-        Console.Write(new string(_wallCharacter, width));
+            for (var x = 0; x < LevelMap.LevelWidth * _tileSizeX; x++)
+            {
+                Console.ForegroundColor = MapColorFromStaticObject(_map.Map[x / _tileSizeX][y / _tileSizeY]);
+                Console.Write(MapCharacterFromStaticObject(_map.Map[x / _tileSizeX][y / _tileSizeY]));
+                Console.ResetColor();
+            }
+        }
     }
+
+    private ConsoleColor MapColorFromStaticObject(StaticObject staticObject) => staticObject switch
+    {
+        StaticObject.Wall => ConsoleColor.DarkRed,
+        StaticObject.DamagedWall => ConsoleColor.DarkRed,
+        StaticObject.River => ConsoleColor.Blue,
+        _ => ConsoleColor.Black
+    };
+
+    private char MapCharacterFromStaticObject(StaticObject staticObject) => staticObject switch
+    {
+        StaticObject.Wall => _wallCharacter,
+        StaticObject.DamagedWall => _wallDamagedCharacter,
+        StaticObject.River => _riverCharacter,
+        _ => _emptyCharacter
+    };
 
     public void RenderCoordinates(Vector2 coordinate)
     {
@@ -71,10 +93,24 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         Console.Write($"Level: {level}                     ");
     }
 
-    public void EraseAt(Vector2 coordinate)
+    public void EraseAtMapCoordinate(Vector2 coordinate)
     {
-        Console.SetCursorPosition((int)coordinate.X, (int)coordinate.Y);
-        Console.Write(_emptyCharacter);
+        var positionCoordinateX = (int)coordinate.X * _tileSizeX;
+        var positionCoordinateY = (int)coordinate.Y * _tileSizeY;
+
+        Console.SetCursorPosition(positionCoordinateX, positionCoordinateY);
+
+        for (var y = positionCoordinateY; y < positionCoordinateY + _tileSizeY; y++)
+        {
+            Console.SetCursorPosition(positionCoordinateX, y);
+
+            for (var x = positionCoordinateX; x < positionCoordinateX +  _tileSizeX; x++)
+            {
+                Console.ForegroundColor = MapColorFromStaticObject(_map.Map[x / _tileSizeX][y / _tileSizeY]);
+                Console.Write(MapCharacterFromStaticObject(_map.Map[x / _tileSizeX][y / _tileSizeY]));
+                Console.ResetColor();
+            }
+        }
     }
 
     public void Dispose()
@@ -82,8 +118,17 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         Console.CursorVisible = true;
     }
 
-    public void DrawTank(Vector2 position, TankOrientation tankOrientation)
+    public void DrawTank(Vector2 position, TankOrientation tankOrientation, bool playerTank = false)
     {
+        if (playerTank)
+        {
+            Console.ForegroundColor = _playerTankColor;
+        }
+        else
+        {
+            Console.ForegroundColor = _enemyTankColor;
+        }
+
         var tankStartRenderPoint = position * new Vector2(_tileSizeX, _tileSizeY);
 
         int x = (int)tankStartRenderPoint.X;
@@ -102,6 +147,8 @@ internal class ConsoleRenderer : IRenderer, IDisposable
 
             x = (int)tankStartRenderPoint.X;
         }
+
+        Console.ResetColor();
     }
 
     private char[][] GetTilesForOrientation(TankOrientation tankOrientation) => tankOrientation switch
@@ -112,4 +159,9 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         TankOrientation.Right => _tankRightCharacters,
         _ => throw new InvalidOperationException("Невозможная ориентация танка"),
     };
+
+    public void SetMap(LevelMap map)
+    {
+        _map = map;
+    }
 }
