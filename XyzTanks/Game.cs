@@ -224,16 +224,12 @@ internal class Game
             }
         }
 
-        if(enemy.Position.X == _tank.Position.X
-            && ((enemy.Orientation == Orientation.Up && enemy.Position.Y > _tank.Position.Y)
-                || (enemy.Orientation == Orientation.Down && enemy.Position.Y < _tank.Position.Y)))
-        {
-            SpawnProjectile(enemy.Position, enemy.Orientation);
-        }
-
-        if (enemy.Position.Y == _tank.Position.Y
-            && ((enemy.Orientation == Orientation.Left && enemy.Position.X > _tank.Position.X)
-                || (enemy.Orientation == Orientation.Right && enemy.Position.X < _tank.Position.X)))
+        if((enemy.Position.X == _tank.Position.X
+                && ((enemy.Orientation == Orientation.Up && enemy.Position.Y > _tank.Position.Y)
+                    || (enemy.Orientation == Orientation.Down && enemy.Position.Y < _tank.Position.Y)))
+            || (enemy.Position.Y == _tank.Position.Y
+                && ((enemy.Orientation == Orientation.Left && enemy.Position.X > _tank.Position.X)
+                    || (enemy.Orientation == Orientation.Right && enemy.Position.X < _tank.Position.X))))
         {
             SpawnProjectile(enemy.Position, enemy.Orientation);
         }
