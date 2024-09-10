@@ -3,6 +3,8 @@
 namespace XyzTanks;
 public class LevelMap
 {
+    private readonly Random _random = new Random(DateTime.Now.Second);
+
     public const int LevelHeight = 13;
     public const int LevelWidth = 13;
 
@@ -77,5 +79,19 @@ public class LevelMap
         {
             Set(x, y, StaticObject.Empty);
         }
+    }
+
+    public Vector2 GetRandomTankPosition()
+    {
+        int x;
+        int y;
+        do
+        {
+            x = _random.Next(LevelWidth);
+            y = _random.Next(LevelHeight);
+        }
+        while (!IsWalkableAtCoordinate(x, y));
+
+        return new Vector2(x, y);
     }
 }

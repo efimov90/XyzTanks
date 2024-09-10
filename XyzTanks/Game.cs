@@ -11,8 +11,6 @@ internal class Game
 
     private readonly TimeSpan _fireDelay = TimeSpan.FromSeconds(1);
 
-    private readonly Random _random = new Random(DateTime.Now.Second);
-
     private bool _running = false;
 
     private double _tickSeconds = 1d;
@@ -49,7 +47,7 @@ internal class Game
         _renderer.SetMap(_map);
 
         _tank = new Tank();
-        _tank.Position = new Vector2(1, 1);
+        _tank.Position = _map.GetRandomTankPosition();
     }
 
     public async Task RunAsync()
@@ -141,6 +139,16 @@ internal class Game
 
         _inputReader.Update();
 
+        UpdateProjectiles();
+        UpdatePlayerTank();
+
+        _renderer.RenderGameInfo(_level, _tank.Health);
+
+        _secondsFromLastUpdate = 0;
+    }
+
+    private void UpdatePlayerTank()
+    {
         if (_lastTankPosition != _tank.Position
             || _lastTankOrientation != _tank.Orientation)
         {
@@ -148,6 +156,18 @@ internal class Game
             _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
         }
 
+        if (_projectiles.Any(x => x.Position == _tank.Position))
+        {
+            _tank.Health--;
+            if (_tank.Health <= 0)
+            {
+                _running = false;
+            }
+        }
+    }
+
+    private void UpdateProjectiles()
+    {
         var projectilesToRemove = new List<Projectile>();
 
         foreach (var projectile in _projectiles)
@@ -182,7 +202,7 @@ internal class Game
                 continue;
             }
 
-            if(!_map.IsProjectilePassable(projectile.Position))
+            if (!_map.IsProjectilePassable(projectile.Position))
             {
                 if (_map.IsDamageable(projectile.Position))
                 {
@@ -198,9 +218,5 @@ internal class Game
         }
 
         _projectiles.RemoveAll(projectilesToRemove.Contains);
-
-        _renderer.RenderGameInfo(_level, _tank.Health);
-
-        _secondsFromLastUpdate = 0;
     }
 }
