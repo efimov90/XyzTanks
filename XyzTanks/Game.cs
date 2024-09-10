@@ -68,7 +68,15 @@ internal class Game
             for (int enemyCount = 0; enemyCount < _level; enemyCount++)
             {
                 var newEnemyTank = new Tank();
-                newEnemyTank.Position = _map.GetRandomTankPosition();
+
+                var position = _map.GetRandomTankPosition();
+
+                while(_enemyTanks.Any(et => et.Position == position) || _tank.Position == position)
+                {
+                    position = _map.GetRandomTankPosition();
+                }
+
+                newEnemyTank.Position = position;
                 newEnemyTank.Orientation = GetRandomOrientation();
                 _enemyTanks.Add(newEnemyTank);
             }
@@ -211,9 +219,6 @@ internal class Game
         var lastEnemyTankPosition = enemy.Position;
         var lastEnemyTankOrientation = enemy.Orientation;
 
-        _renderer.EraseAtMapCoordinate(lastEnemyTankPosition);
-        _renderer.DrawTank(enemy.Position, enemy.Orientation);
-
         if (_projectiles.Any(x => x.Position == enemy.Position))
         {
             enemy.Health--;
@@ -233,23 +238,78 @@ internal class Game
         {
             SpawnProjectile(enemy.Position, enemy.Orientation);
         }
+
+        IList<Vector2> nextPossiblePositions = GetPossibleDirections(enemy);
+
+        Vector2 nextPosition;
+
+        if (nextPossiblePositions.Count == 0)
+        {
+            return;
+        }
+
+        var nextDefaultPosition = enemy.GetNextPositionByOrientation();
+
+        if (nextPossiblePositions.Count > 2 || !_map.IsWalkableAtCoordinate(nextDefaultPosition))
+        {
+            nextPosition = nextPossiblePositions[_random.Next(nextPossiblePositions.Count)];
+            enemy.Orientation = enemy.GetNextOrientationByNextPosition(nextPosition);
+        }
+        else if(nextPossiblePositions.Count == 2 && !_map.IsWalkableAtCoordinate(nextDefaultPosition))
+        {
+            nextPosition = nextPossiblePositions.Where(x => x != enemy.GetOppositeDirectionPosition()).First();
+            
+        }
+        else if (nextPossiblePositions.Count == 1)
+        {
+            nextPosition = enemy.GetOppositeDirectionPosition();
+        }
+        else
+        {
+            nextPosition = nextDefaultPosition;
+        }
+
+        enemy.Position = nextPosition;
+
+        _renderer.EraseAtMapCoordinate(lastEnemyTankPosition);
+
+        _renderer.DrawTank(enemy.Position, enemy.Orientation);
+    }
+
+    private List<Vector2> GetPossibleDirections(Tank enemy)
+    {
+        var result = new List<Vector2>();
+
+        if (_map.IsWalkableAtCoordinate(enemy.Lefter))
+        {
+            result.Add(enemy.Lefter);
+        }
+
+        if (_map.IsWalkableAtCoordinate(enemy.Righter))
+        {
+            result.Add(enemy.Righter);
+        }
+
+        if (_map.IsWalkableAtCoordinate(enemy.Upper))
+        {
+            result.Add(enemy.Upper);
+        }
+
+        if (_map.IsWalkableAtCoordinate(enemy.Lower))
+        {
+            result.Add(enemy.Lower);
+        }
+
+        return result;
     }
 
     private void UpdatePlayerTank()
     {
         var listProjectilesToRemove = new List<Projectile>();
 
-        if (_lastTankPosition != _tank.Position
-            || _lastTankOrientation != _tank.Orientation)
+        if(_lastTankPosition != _tank.Position)
         {
-            if(_lastTankPosition != _tank.Position)
-            {
-                _renderer.EraseAtMapCoordinate(_lastTankPosition);
-            }
-            _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
-
-            _lastTankPosition = _tank.Position;
-            _lastTankOrientation = _tank.Orientation;
+            _renderer.EraseAtMapCoordinate(_lastTankPosition);
         }
 
         if (_projectiles.Any(x => x.Position == _tank.Position))
@@ -262,7 +322,13 @@ internal class Game
                 _running = false;
             }
         }
+
         _projectiles.RemoveAll(listProjectilesToRemove.Contains);
+
+        _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
+
+        _lastTankPosition = _tank.Position;
+        _lastTankOrientation = _tank.Orientation;
     }
 
     private void UpdateProjectiles()
