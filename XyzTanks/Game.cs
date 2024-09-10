@@ -1,9 +1,10 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace XyzTanks;
 internal class Game
 {
+    private readonly Random _random = new Random(DateTime.Now.Second);
+
     private readonly LevelLoader _levelLoader;
     private readonly IInputReader _inputReader;
     private readonly IRenderer _renderer;
@@ -57,12 +58,18 @@ internal class Game
             _renderer.SetMap(_map);
             _tank = new Tank();
             _tank.Position = _map.GetRandomTankPosition();
-            _renderer.RenderWalls();
 
-            for(int enemyCount = 0; enemyCount < _level; enemyCount++)
+            _tank.Orientation = GetRandomOrientation();
+            _lastTankPosition = _tank.Position;
+            _lastTankOrientation = _tank.Orientation;
+            _renderer.RenderWalls();
+            _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
+
+            for (int enemyCount = 0; enemyCount < _level; enemyCount++)
             {
                 var newEnemyTank = new Tank();
                 newEnemyTank.Position = _map.GetRandomTankPosition();
+                newEnemyTank.Orientation = GetRandomOrientation();
                 _enemyTanks.Add(newEnemyTank);
             }
         }
@@ -70,6 +77,12 @@ internal class Game
         {
             _running = false;
         }
+    }
+
+    private Orientation GetRandomOrientation()
+    {
+        var orientationValues = Enum.GetValues(typeof(Orientation));
+        return (Orientation)(orientationValues?.GetValue(_random.Next(orientationValues.Length)) ?? Orientation.Up);
     }
 
     public async Task RunAsync()
@@ -94,9 +107,6 @@ internal class Game
 
     private void OnInputActionCalled(object? sender, InputEventArgs e)
     {
-        _lastTankPosition = _tank.Position;
-        _lastTankOrientation = _tank.Orientation;
-
         switch (e.InputAction)
         {
             case InputAction.Up:
@@ -138,11 +148,7 @@ internal class Game
                     return;
                 }
 
-                _projectiles.Add(new Projectile
-                {
-                    Position = _tank.Position,
-                    Orientation = _tank.Orientation
-                });
+                SpawnProjectile(_tank.Position, _tank.Orientation);
 
                 _nextShotTime = DateTime.Now.Add(_fireDelay);
                 break;
@@ -150,6 +156,15 @@ internal class Game
                 _running = false;
                 break;
         }
+    }
+
+    private void SpawnProjectile(Vector2 position, Orientation orientation)
+    {
+        _projectiles.Add(new Projectile
+        {
+            Position = position,
+            Orientation = orientation
+        });
     }
 
     private void Update(double totalSeconds)
@@ -185,24 +200,43 @@ internal class Game
 
         foreach(var enemy in _enemyTanks)
         {
-            var lastEnemyTankPosition = enemy.Position;
-            var lastEnemyTankOrientation = enemy.Orientation;
-
-            _renderer.EraseAtMapCoordinate(lastEnemyTankPosition);
-            _renderer.DrawTank(enemy.Position, enemy.Orientation);
-
-            if (_projectiles.Any(x => x.Position == enemy.Position))
-            {
-                enemy.Health--;
-                listProjectilesToRemove.Add(_projectiles.First(x => x.Position == enemy.Position));
-                if (enemy.Health <= 0)
-                {
-                    listEnemyToDispose.Add(enemy);
-                }
-            }
+            UpdateEnemyTank(listEnemyToDispose, listProjectilesToRemove, enemy);
         }
         _projectiles.RemoveAll(listProjectilesToRemove.Contains);
         _enemyTanks.RemoveAll(listEnemyToDispose.Contains);
+    }
+
+    private void UpdateEnemyTank(List<Tank> listEnemyToDispose, List<Projectile> listProjectilesToRemove, Tank enemy)
+    {
+        var lastEnemyTankPosition = enemy.Position;
+        var lastEnemyTankOrientation = enemy.Orientation;
+
+        _renderer.EraseAtMapCoordinate(lastEnemyTankPosition);
+        _renderer.DrawTank(enemy.Position, enemy.Orientation);
+
+        if (_projectiles.Any(x => x.Position == enemy.Position))
+        {
+            enemy.Health--;
+            listProjectilesToRemove.Add(_projectiles.First(x => x.Position == enemy.Position));
+            if (enemy.Health <= 0)
+            {
+                listEnemyToDispose.Add(enemy);
+            }
+        }
+
+        if(enemy.Position.X == _tank.Position.X
+            && ((enemy.Orientation == Orientation.Up && enemy.Position.Y > _tank.Position.Y)
+                || (enemy.Orientation == Orientation.Down && enemy.Position.Y < _tank.Position.Y)))
+        {
+            SpawnProjectile(enemy.Position, enemy.Orientation);
+        }
+
+        if (enemy.Position.Y == _tank.Position.Y
+            && ((enemy.Orientation == Orientation.Left && enemy.Position.X > _tank.Position.X)
+                || (enemy.Orientation == Orientation.Right && enemy.Position.X < _tank.Position.X)))
+        {
+            SpawnProjectile(enemy.Position, enemy.Orientation);
+        }
     }
 
     private void UpdatePlayerTank()
@@ -212,8 +246,14 @@ internal class Game
         if (_lastTankPosition != _tank.Position
             || _lastTankOrientation != _tank.Orientation)
         {
-            _renderer.EraseAtMapCoordinate(_lastTankPosition);
+            if(_lastTankPosition != _tank.Position)
+            {
+                _renderer.EraseAtMapCoordinate(_lastTankPosition);
+            }
             _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
+
+            _lastTankPosition = _tank.Position;
+            _lastTankOrientation = _tank.Orientation;
         }
 
         if (_projectiles.Any(x => x.Position == _tank.Position))
