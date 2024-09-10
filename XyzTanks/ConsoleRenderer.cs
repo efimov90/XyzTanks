@@ -39,7 +39,7 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         ['T', '╚', '═', '╝']
     ];
 
-    private LevelMap _map;
+    private LevelMap _map = null!;
 
     public ConsoleRenderer()
     {

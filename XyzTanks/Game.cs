@@ -26,8 +26,6 @@ internal class Game
     private LevelMap _map;
     private Tank _tank;
 
-    private int _fieldSizeX = 13;
-    private int _fieldSizeY = 13;
     private Vector2 _lastTankPosition;
 
     private List<Projectile> _projectiles = new List<Projectile>();
@@ -171,15 +169,28 @@ internal class Game
                 Orientation.Down => projectile.Lower,
                 Orientation.Left => projectile.Lefter,
                 Orientation.Right => projectile.Righter,
+                _ => throw new InvalidOperationException("Невозможное состояние")
             };
 
             if (projectile.Position.X < 0
-                || projectile.Position.X > LevelMap.LevelWidth - 1
+                || projectile.Position.X > LevelMap.LevelWidth
                 || projectile.Position.Y < 0
-                || projectile.Position.Y > LevelMap.LevelHeight - 1)
+                || projectile.Position.Y > LevelMap.LevelHeight)
             {
                 projectilesToRemove.Add(projectile);
 
+                continue;
+            }
+
+            if(!_map.IsProjectilePassable(projectile.Position))
+            {
+                if (_map.IsDamageable(projectile.Position))
+                {
+                    _map.Damage(projectile.Position);
+                    _renderer.EraseAtMapCoordinate(projectile.Position);
+                }
+
+                projectilesToRemove.Add(projectile);
                 continue;
             }
 
