@@ -9,6 +9,8 @@ internal class Game
 
     private readonly ShowTextState _showTextState;
 
+    private readonly TimeSpan _fireDelay = TimeSpan.FromSeconds(1);
+
     private readonly Random _random = new Random(DateTime.Now.Second);
 
     private bool _running = false;
@@ -16,9 +18,10 @@ internal class Game
     private double _tickSeconds = 1d;
     private double _secondsFromLastUpdate = 0d;
 
-
-
     private DateTime _lastUpdateTime = DateTime.Now;
+
+    private DateTime _nextShotTime = DateTime.Now;
+
     private int _level = 1;
     private LevelMap _map;
     private Tank _tank;
@@ -26,6 +29,9 @@ internal class Game
     private int _fieldSizeX = 13;
     private int _fieldSizeY = 13;
     private Vector2 _lastTankPosition;
+
+    private List<Projectile> _projectiles = new List<Projectile>();
+    private Orientation _lastTankOrientation;
 
     public Game(
         LevelLoader levelLoader,
@@ -45,6 +51,7 @@ internal class Game
         _renderer.SetMap(_map);
 
         _tank = new Tank();
+        _tank.Position = new Vector2(1, 1);
     }
 
     public async Task RunAsync()
@@ -72,24 +79,52 @@ internal class Game
     private void OnInputActionCalled(object? sender, InputEventArgs e)
     {
         _lastTankPosition = _tank.Position;
+        _lastTankOrientation = _tank.Orientation;
 
         switch (e.InputAction)
         {
             case InputAction.Up:
-                _tank.Orientation = TankOrientation.Up;
-                _tank.MoveUp();
+                _tank.Orientation = Orientation.Up;
+                if (_map.IsWalkableAtCoordinate(_tank.Upper))
+                {
+                    _tank.MoveUp();
+                }
                 break;
             case InputAction.Down:
-                _tank.Orientation = TankOrientation.Down;
-                _tank.MoveDown();
+                _tank.Orientation = Orientation.Down;
+                if (_map.IsWalkableAtCoordinate(_tank.Lower))
+                {
+                    _tank.MoveDown();
+                }
                 break;
             case InputAction.Left:
-                _tank.Orientation = TankOrientation.Left;
-                _tank.MoveLeft();
+                _tank.Orientation = Orientation.Left;
+                if (_map.IsWalkableAtCoordinate(_tank.Lefter))
+                {
+                    _tank.MoveLeft();
+                }
                 break;
             case InputAction.Right:
-                _tank.Orientation = TankOrientation.Right;
-                _tank.MoveRight();
+                _tank.Orientation = Orientation.Right;
+                if (_map.IsWalkableAtCoordinate(_tank.Righter))
+                {
+                    _tank.MoveRight();
+                }
+                break;
+
+            case InputAction.Fire:
+                if (_nextShotTime > DateTime.Now)
+                {
+                    return;
+                }
+
+                _projectiles.Add(new Projectile
+                {
+                    Position = _tank.Position,
+                    Orientation = _tank.Orientation
+                });
+
+                _nextShotTime = DateTime.Now.Add(_fireDelay);
                 break;
             case InputAction.Exit:
                 _running = false;
@@ -108,13 +143,52 @@ internal class Game
 
         _inputReader.Update();
 
-        if (_lastTankPosition != _tank.Position)
+        if (_lastTankPosition != _tank.Position
+            || _lastTankOrientation != _tank.Orientation)
         {
             _renderer.EraseAtMapCoordinate(_lastTankPosition);
             _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
         }
 
-        _renderer.RenderGameInfo(_level);
+        var projectilesToRemove = new List<Projectile>();
+
+        foreach (var projectile in _projectiles)
+        {
+            var projectileLastPosition = projectile.Position;
+
+            if (projectile.Position.X >= 0
+                && projectile.Position.X <= LevelMap.LevelWidth - 1
+                && projectile.Position.Y >= 0
+                && projectile.Position.Y <= LevelMap.LevelHeight - 1
+                && projectile.Position != _tank.Position)
+            {
+                _renderer.EraseAtMapCoordinate(projectileLastPosition);
+            }
+
+            projectile.Position = projectile.Orientation switch
+            {
+                Orientation.Up => projectile.Upper,
+                Orientation.Down => projectile.Lower,
+                Orientation.Left => projectile.Lefter,
+                Orientation.Right => projectile.Righter,
+            };
+
+            if (projectile.Position.X < 0
+                || projectile.Position.X > LevelMap.LevelWidth - 1
+                || projectile.Position.Y < 0
+                || projectile.Position.Y > LevelMap.LevelHeight - 1)
+            {
+                projectilesToRemove.Add(projectile);
+
+                continue;
+            }
+
+            _renderer.DrawProjectileAt(projectile.Position);
+        }
+
+        _projectiles.RemoveAll(projectilesToRemove.Contains);
+
+        _renderer.RenderGameInfo(_level, _tank.Health);
 
         _secondsFromLastUpdate = 0;
     }

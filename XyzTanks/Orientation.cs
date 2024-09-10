@@ -1,6 +1,6 @@
 ﻿namespace XyzTanks;
 
-public enum TankOrientation
+public enum Orientation
 {
     Up,
     Down,

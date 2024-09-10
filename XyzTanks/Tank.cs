@@ -4,25 +4,32 @@ namespace XyzTanks;
 internal class Tank
 {
     public Vector2 Position { get; set; }
-    public TankOrientation Orientation { get; set; } = TankOrientation.Up;
+    public Orientation Orientation { get; set; } = Orientation.Up;
+
+    public int Health { get; set; } = 2;
 
     public void MoveUp()
     {
-        Position += new Vector2(0, -1);
+        Position = Upper;
     }
 
     public void MoveDown()
     {
-        Position += new Vector2(0, 1);
+        Position = Lower;
     }
 
     public void MoveLeft()
     {
-        Position += new Vector2(-1, 0);
+        Position = Lefter;
     }
 
     public void MoveRight()
     {
-        Position += new Vector2(1,0);
+        Position = Righter;
     }
+
+    public Vector2 Upper => Position + new Vector2(0, -1);
+    public Vector2 Lower => Position + new Vector2(0, 1);
+    public Vector2 Righter => Position + new Vector2(1, 0);
+    public Vector2 Lefter => Position + new Vector2(-1, 0);
 }

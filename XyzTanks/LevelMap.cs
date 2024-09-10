@@ -1,4 +1,6 @@
-﻿namespace XyzTanks;
+﻿using System.Numerics;
+
+namespace XyzTanks;
 public class LevelMap
 {
     public const int LevelHeight = 13;
@@ -29,4 +31,14 @@ public class LevelMap
     {
         _map[x][y] = staticObject;
     }
+
+    public bool IsWalkableAtCoordinate(Vector2 vector) =>
+        IsWalkableAtCoordinate((int)vector.X, (int)vector.Y);
+
+    public bool IsWalkableAtCoordinate(int x, int y) =>
+        x > 0
+        && y > 0
+        && x < LevelWidth
+        && y < LevelHeight
+        && _map[x][y] == StaticObject.Empty;
 }

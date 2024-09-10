@@ -7,7 +7,7 @@ internal class ConsoleRenderer : IRenderer, IDisposable
     private const char _wallDamagedCharacter = '▒';
     private const char _emptyCharacter = ' ';
     private const char _riverCharacter = '~';
-    private const char _projectileCharacter = '○';
+    private const char _projectileCharacter = 'O';
 
     private readonly ConsoleColor _playerTankColor = ConsoleColor.Green;
     private readonly ConsoleColor _enemyTankColor = ConsoleColor.White;
@@ -79,18 +79,11 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         _ => _emptyCharacter
     };
 
-    public void RenderCoordinates(Vector2 coordinate)
+    public void RenderGameInfo(int level, int health)
     {
         var consoleWindowHeight = Console.WindowHeight;
         Console.SetCursorPosition(0, consoleWindowHeight - 1);
-        Console.Write($"X: {coordinate.X}, Y: {coordinate.Y}                     ");
-    }
-
-    public void RenderGameInfo(int level)
-    {
-        var consoleWindowHeight = Console.WindowHeight;
-        Console.SetCursorPosition(0, consoleWindowHeight - 1);
-        Console.Write($"Level: {level}                     ");
+        Console.Write($"Level: {level} | Health {health}     ");
     }
 
     public void EraseAtMapCoordinate(Vector2 coordinate)
@@ -118,7 +111,7 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         Console.CursorVisible = true;
     }
 
-    public void DrawTank(Vector2 position, TankOrientation tankOrientation, bool playerTank = false)
+    public void DrawTank(Vector2 position, Orientation tankOrientation, bool playerTank = false)
     {
         if (playerTank)
         {
@@ -151,17 +144,29 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         Console.ResetColor();
     }
 
-    private char[][] GetTilesForOrientation(TankOrientation tankOrientation) => tankOrientation switch
+    private char[][] GetTilesForOrientation(Orientation tankOrientation) => tankOrientation switch
     {
-        TankOrientation.Up => _tankUpCharacters,
-        TankOrientation.Down => _tankDownCharacters,
-        TankOrientation.Left => _tankLeftCharacters,
-        TankOrientation.Right => _tankRightCharacters,
+        Orientation.Up => _tankUpCharacters,
+        Orientation.Down => _tankDownCharacters,
+        Orientation.Left => _tankLeftCharacters,
+        Orientation.Right => _tankRightCharacters,
         _ => throw new InvalidOperationException("Невозможная ориентация танка"),
     };
 
     public void SetMap(LevelMap map)
     {
         _map = map;
+    }
+
+    public void DrawProjectileAt(Vector2 position)
+    {
+        var tankStartRenderPoint = position * new Vector2(_tileSizeX, _tileSizeY);
+
+        int x = (int)tankStartRenderPoint.X;
+        int y = (int)tankStartRenderPoint.Y;
+
+        Console.SetCursorPosition(x, y);
+
+        Console.Write(_projectileCharacter);
     }
 }
