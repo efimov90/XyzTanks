@@ -14,5 +14,10 @@ public static class DependencyInjection
         .AddSingleton<ILevelMapManager, LevelMapManager>()
         .AddSingleton<ShowTextState>()
         .AddSingleton<Game>()
-        .AddTransient<EnemyTank>();
+        .AddUnits();
+
+    public static IServiceCollection AddUnits(this IServiceCollection services) => services
+        .AddTransient<EnemyTank>()
+        .AddTransient<Tank>()
+        .AddTransient<Projectile>();
 }

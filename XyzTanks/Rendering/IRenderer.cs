@@ -4,9 +4,9 @@ using XyzTanks.Engine;
 namespace XyzTanks.Rendering;
 public interface IRenderer
 {
-    void DrawProjectileAt(Vector2 position);
-    void DrawTank(Vector2 position, Orientation tankOrientation, bool playerTank = false);
-    void EraseAtMapCoordinate(Vector2 coordinate);
+    void DrawProjectileAt(Vector2Int position);
+    void DrawTank(Vector2Int position, Orientation tankOrientation, bool playerTank = false);
+    void EraseAtMapCoordinate(Vector2Int coordinate);
     void RenderGameInfo(int level, int health);
     void RenderWalls();
 }

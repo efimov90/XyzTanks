@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using XyzTanks.Engine;
+﻿using XyzTanks.Engine;
 using XyzTanks.Map;
 
 namespace XyzTanks.Rendering;
@@ -87,7 +86,7 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         Console.Write($"Level: {level} | Health {health}     ");
     }
 
-    public void EraseAtMapCoordinate(Vector2 coordinate)
+    public void EraseAtMapCoordinate(Vector2Int coordinate)
     {
         var positionCoordinateX = (int)coordinate.X * _tileSizeX;
         var positionCoordinateY = (int)coordinate.Y * _tileSizeY;
@@ -112,7 +111,7 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         Console.CursorVisible = true;
     }
 
-    public void DrawTank(Vector2 position, Orientation tankOrientation, bool playerTank = false)
+    public void DrawTank(Vector2Int position, Orientation tankOrientation, bool playerTank = false)
     {
         if (playerTank)
         {
@@ -123,7 +122,7 @@ internal class ConsoleRenderer : IRenderer, IDisposable
             Console.ForegroundColor = _enemyTankColor;
         }
 
-        var tankStartRenderPoint = position * new Vector2(_tileSizeX, _tileSizeY);
+        var tankStartRenderPoint = position * new Vector2Int(_tileSizeX, _tileSizeY);
 
         int x = (int)tankStartRenderPoint.X;
         int y = (int)tankStartRenderPoint.Y;
@@ -154,9 +153,9 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         _ => throw new InvalidOperationException("Невозможная ориентация танка"),
     };
 
-    public void DrawProjectileAt(Vector2 position)
+    public void DrawProjectileAt(Vector2Int position)
     {
-        var tankStartRenderPoint = position * new Vector2(_tileSizeX, _tileSizeY);
+        var tankStartRenderPoint = position * new Vector2Int(_tileSizeX, _tileSizeY);
 
         int x = (int)tankStartRenderPoint.X;
         int y = (int)tankStartRenderPoint.Y;

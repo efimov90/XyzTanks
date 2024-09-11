@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using XyzTanks.Engine;
 using XyzTanks.Extensions;
 
 namespace XyzTanks.Map;
@@ -42,16 +42,16 @@ public class LevelMapManager : ILevelMapManager
         }
     }
 
-    public void Set(Vector2 position, StaticObject staticObject)
-        => Set((int)position.X, (int)position.Y, staticObject);
+    public void Set(Vector2Int position, StaticObject staticObject)
+        => Set(position.X, position.Y, staticObject);
 
     public void Set(int x, int y, StaticObject staticObject)
     {
         _map[x][y] = staticObject;
     }
 
-    public bool IsWalkableAtCoordinate(Vector2 position) =>
-        IsWalkableAtCoordinate((int)position.X, (int)position.Y);
+    public bool IsWalkableAtCoordinate(Vector2Int position) =>
+        IsWalkableAtCoordinate(position.X, position.Y);
 
     public bool IsWalkableAtCoordinate(int x, int y) =>
         IsOnMap(x, y)
@@ -63,24 +63,24 @@ public class LevelMapManager : ILevelMapManager
         && x < LevelWidth
         && y < LevelHeight;
 
-    public bool IsProjectilePassable(Vector2 position) =>
-        IsProjectilePassable((int)position.X, (int)position.Y);
+    public bool IsProjectilePassable(Vector2Int position) =>
+        IsProjectilePassable(position.X, position.Y);
 
     public bool IsProjectilePassable(int x, int y) =>
         IsOnMap(x, y)
         && (_map[x][y] == StaticObject.Empty
             || _map[x][y] == StaticObject.River);
 
-    public bool IsDamageable(Vector2 position) =>
-        IsDamageable((int)position.X, (int)position.Y);
+    public bool IsDamageable(Vector2Int position) =>
+        IsDamageable(position.X, position.Y);
 
     public bool IsDamageable(int x, int y) =>
         IsOnMap(x, y)
         && (_map[x][y] == StaticObject.Wall
             || _map[x][y] == StaticObject.DamagedWall);
 
-    public void Damage(Vector2 position)
-        => Damage((int)position.X, (int)position.Y);
+    public void Damage(Vector2Int position)
+        => Damage(position.X, position.Y);
 
     public void Damage(int x, int y)
     {
@@ -94,7 +94,7 @@ public class LevelMapManager : ILevelMapManager
         }
     }
 
-    public Vector2 GetRandomTankPosition()
+    public Vector2Int GetRandomTankPosition()
     {
         int x;
         int y;
@@ -105,6 +105,6 @@ public class LevelMapManager : ILevelMapManager
         }
         while (!IsWalkableAtCoordinate(x, y));
 
-        return new Vector2(x, y);
+        return new Vector2Int(x, y);
     }
 }

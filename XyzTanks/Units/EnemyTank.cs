@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using XyzTanks.Engine;
+﻿using XyzTanks.Engine;
 using XyzTanks.Map;
 
 namespace XyzTanks.Units;
@@ -17,28 +16,28 @@ public class EnemyTank : Tank, IUpdateable
 
     }
 
-    public List<Vector2> GetPossibleDirections()
+    public List<Vector2Int> GetPossibleDirections()
     {
-        var result = new List<Vector2>();
+        var result = new List<Vector2Int>();
 
-        if (_levelMapManager.IsWalkableAtCoordinate(Lefter))
+        if (_levelMapManager.IsWalkableAtCoordinate(Transform.Lefter))
         {
-            result.Add(Lefter);
+            result.Add(Transform.Lefter);
         }
 
-        if (_levelMapManager.IsWalkableAtCoordinate(Righter))
+        if (_levelMapManager.IsWalkableAtCoordinate(Transform.Righter))
         {
-            result.Add(Righter);
+            result.Add(Transform.Righter);
         }
 
-        if (_levelMapManager.IsWalkableAtCoordinate(Upper))
+        if (_levelMapManager.IsWalkableAtCoordinate(Transform.Upper))
         {
-            result.Add(Upper);
+            result.Add(Transform.Upper);
         }
 
-        if (_levelMapManager.IsWalkableAtCoordinate(Lower))
+        if (_levelMapManager.IsWalkableAtCoordinate(Transform.Lower))
         {
-            result.Add(Lower);
+            result.Add(Transform.Lower);
         }
 
         return result;
