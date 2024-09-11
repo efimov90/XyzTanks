@@ -4,9 +4,10 @@ using XyzTanks;
 var serviceProvider = new ServiceCollection()
     .AddSingleton<IInputReader, ConsoleInputReader>()
     .AddSingleton<IRenderer, ConsoleRenderer>()
+    .AddSingleton<ILevelMapManager, LevelMapManager>()
     .AddSingleton<ShowTextState>()
-    .AddSingleton<LevelLoader>()
     .AddSingleton<Game>()
+    .AddTransient<EnemyTank>()
     .BuildServiceProvider();
 
 var game = serviceProvider.GetRequiredService<Game>();

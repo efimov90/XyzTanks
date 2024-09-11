@@ -1,10 +1,9 @@
 ﻿using System.Numerics;
 
 namespace XyzTanks;
-public class LevelMap
+public class LevelMapManager : ILevelMapManager
 {
     private readonly Random _random = new Random(DateTime.Now.Second);
-
     public const int LevelHeight = 13;
     public const int LevelWidth = 13;
 
@@ -12,7 +11,7 @@ public class LevelMap
 
     public IList<IList<StaticObject>> Map => _map;
 
-    public LevelMap()
+    public LevelMapManager()
     {
         _map = new List<IList<StaticObject>>(LevelHeight);
 
@@ -26,6 +25,19 @@ public class LevelMap
             }
 
             _map.Add(row);
+        }
+    }
+
+    public void LoadLevel(string name)
+    {
+        var rows = File.ReadAllLines(name);
+
+        for (int y = 0; y < LevelHeight; y++)
+        {
+            for (int x = 0; x < LevelWidth; x++)
+            {
+                Set(x, y, rows[y][x].ToStaticObject());
+            }
         }
     }
 

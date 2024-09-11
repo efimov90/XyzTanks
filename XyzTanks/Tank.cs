@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 
 namespace XyzTanks;
-internal class Tank
+public class Tank
 {
     public Vector2 Position { get; set; }
     public Orientation Orientation { get; set; } = Orientation.Up;

@@ -8,5 +8,4 @@ public interface IRenderer
     void EraseAtMapCoordinate(Vector2 coordinate);
     void RenderGameInfo(int level, int health);
     void RenderWalls();
-    void SetMap(LevelMap map);
 }

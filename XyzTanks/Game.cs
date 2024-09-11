@@ -1,11 +1,11 @@
-﻿using System.Numerics;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Numerics;
 
 namespace XyzTanks;
 internal class Game
 {
     private readonly Random _random = new Random(DateTime.Now.Second);
-
-    private readonly LevelLoader _levelLoader;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IInputReader _inputReader;
     private readonly IRenderer _renderer;
 
@@ -23,26 +23,27 @@ internal class Game
     private DateTime _nextShotTime = DateTime.Now;
 
     private int _level = 1;
-    private LevelMap _map;
-    private Tank _tank;
+    private ILevelMapManager _levelMapManager;
+    private Tank _tank = null!;
 
-    private List<Tank> _enemyTanks = new List<Tank>();
+    private readonly List<EnemyTank> _enemyTanks = new();
 
     private Vector2 _lastTankPosition;
 
-    private List<Projectile> _projectiles = new List<Projectile>();
-    private Orientation _lastTankOrientation;
+    private readonly List<Projectile> _projectiles = new();
 
     public Game(
-        LevelLoader levelLoader,
+        IServiceProvider serviceProvider,
         IInputReader inputReader,
         IRenderer renderer,
-        ShowTextState showTextState)
+        ShowTextState showTextState,
+        ILevelMapManager levelMapManager)
     {
-        _levelLoader = levelLoader;
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _inputReader = inputReader ?? throw new ArgumentNullException(nameof(inputReader));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
         _showTextState = showTextState ?? throw new ArgumentNullException(nameof(showTextState));
+        _levelMapManager = levelMapManager ?? throw new ArgumentNullException(nameof(levelMapManager));
 
         _inputReader.InputActionCalled += OnInputActionCalled;
 
@@ -54,26 +55,24 @@ internal class Game
         if (File.Exists($"Levels/level{_level}.txt"))
         {
             _projectiles.Clear();
-            _map = _levelLoader.LoadLevel($"Levels/level{_level}.txt");
-            _renderer.SetMap(_map);
+            _levelMapManager.LoadLevel($"Levels/level{_level}.txt");
             _tank = new Tank();
-            _tank.Position = _map.GetRandomTankPosition();
+            _tank.Position = _levelMapManager.GetRandomTankPosition();
 
             _tank.Orientation = GetRandomOrientation();
             _lastTankPosition = _tank.Position;
-            _lastTankOrientation = _tank.Orientation;
             _renderer.RenderWalls();
             _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
 
             for (int enemyCount = 0; enemyCount < _level; enemyCount++)
             {
-                var newEnemyTank = new Tank();
+                var newEnemyTank = _serviceProvider.GetRequiredService<EnemyTank>();
 
-                var position = _map.GetRandomTankPosition();
+                var position = _levelMapManager.GetRandomTankPosition();
 
                 while(_enemyTanks.Any(et => et.Position == position) || _tank.Position == position)
                 {
-                    position = _map.GetRandomTankPosition();
+                    position = _levelMapManager.GetRandomTankPosition();
                 }
 
                 newEnemyTank.Position = position;
@@ -119,7 +118,7 @@ internal class Game
         {
             case InputAction.Up:
                 _tank.Orientation = Orientation.Up;
-                if (_map.IsWalkableAtCoordinate(_tank.Upper)
+                if (_levelMapManager.IsWalkableAtCoordinate(_tank.Upper)
                     && !_enemyTanks.Any(et => et.Position == _tank.Upper))
                 {
                     _tank.MoveUp();
@@ -127,7 +126,7 @@ internal class Game
                 break;
             case InputAction.Down:
                 _tank.Orientation = Orientation.Down;
-                if (_map.IsWalkableAtCoordinate(_tank.Lower)
+                if (_levelMapManager.IsWalkableAtCoordinate(_tank.Lower)
                     && !_enemyTanks.Any(et => et.Position == _tank.Lower))
                 {
                     _tank.MoveDown();
@@ -135,7 +134,7 @@ internal class Game
                 break;
             case InputAction.Left:
                 _tank.Orientation = Orientation.Left;
-                if (_map.IsWalkableAtCoordinate(_tank.Lefter)
+                if (_levelMapManager.IsWalkableAtCoordinate(_tank.Lefter)
                     && !_enemyTanks.Any(et => et.Position == _tank.Lefter))
                 {
                     _tank.MoveLeft();
@@ -143,7 +142,7 @@ internal class Game
                 break;
             case InputAction.Right:
                 _tank.Orientation = Orientation.Right;
-                if (_map.IsWalkableAtCoordinate(_tank.Righter)
+                if (_levelMapManager.IsWalkableAtCoordinate(_tank.Righter)
                     && !_enemyTanks.Any(et => et.Position == _tank.Righter))
                 {
                     _tank.MoveRight();
@@ -203,7 +202,7 @@ internal class Game
 
     private void UpdateEnemiesTanks()
     {
-        var listEnemyToDispose = new List<Tank>();
+        var listEnemyToDispose = new List<EnemyTank>();
         var listProjectilesToRemove = new List<Projectile>();
 
         foreach(var enemy in _enemyTanks)
@@ -214,7 +213,7 @@ internal class Game
         _enemyTanks.RemoveAll(listEnemyToDispose.Contains);
     }
 
-    private void UpdateEnemyTank(List<Tank> listEnemyToDispose, List<Projectile> listProjectilesToRemove, Tank enemy)
+    private void UpdateEnemyTank(List<EnemyTank> listEnemyToDispose, List<Projectile> listProjectilesToRemove, EnemyTank enemy)
     {
         var lastEnemyTankPosition = enemy.Position;
         var lastEnemyTankOrientation = enemy.Orientation;
@@ -239,7 +238,7 @@ internal class Game
             SpawnProjectile(enemy.Position, enemy.Orientation);
         }
 
-        IList<Vector2> nextPossiblePositions = GetPossibleDirections(enemy);
+        IList<Vector2> nextPossiblePositions = enemy.GetPossibleDirections();
 
         Vector2 nextPosition;
 
@@ -250,12 +249,12 @@ internal class Game
 
         var nextDefaultPosition = enemy.GetNextPositionByOrientation();
 
-        if (nextPossiblePositions.Count > 2 || !_map.IsWalkableAtCoordinate(nextDefaultPosition))
+        if (nextPossiblePositions.Count > 2 || !_levelMapManager.IsWalkableAtCoordinate(nextDefaultPosition))
         {
             nextPosition = nextPossiblePositions[_random.Next(nextPossiblePositions.Count)];
             enemy.Orientation = enemy.GetNextOrientationByNextPosition(nextPosition);
         }
-        else if(nextPossiblePositions.Count == 2 && !_map.IsWalkableAtCoordinate(nextDefaultPosition))
+        else if(nextPossiblePositions.Count == 2 && !_levelMapManager.IsWalkableAtCoordinate(nextDefaultPosition))
         {
             nextPosition = nextPossiblePositions.Where(x => x != enemy.GetOppositeDirectionPosition()).First();
             
@@ -276,32 +275,7 @@ internal class Game
         _renderer.DrawTank(enemy.Position, enemy.Orientation);
     }
 
-    private List<Vector2> GetPossibleDirections(Tank enemy)
-    {
-        var result = new List<Vector2>();
-
-        if (_map.IsWalkableAtCoordinate(enemy.Lefter))
-        {
-            result.Add(enemy.Lefter);
-        }
-
-        if (_map.IsWalkableAtCoordinate(enemy.Righter))
-        {
-            result.Add(enemy.Righter);
-        }
-
-        if (_map.IsWalkableAtCoordinate(enemy.Upper))
-        {
-            result.Add(enemy.Upper);
-        }
-
-        if (_map.IsWalkableAtCoordinate(enemy.Lower))
-        {
-            result.Add(enemy.Lower);
-        }
-
-        return result;
-    }
+    
 
     private void UpdatePlayerTank()
     {
@@ -328,7 +302,6 @@ internal class Game
         _renderer.DrawTank(_tank.Position, _tank.Orientation, true);
 
         _lastTankPosition = _tank.Position;
-        _lastTankOrientation = _tank.Orientation;
     }
 
     private void UpdateProjectiles()
@@ -340,9 +313,9 @@ internal class Game
             var projectileLastPosition = projectile.Position;
 
             if (projectile.Position.X >= 0
-                && projectile.Position.X <= LevelMap.LevelWidth - 1
+                && projectile.Position.X <= LevelMapManager.LevelWidth - 1
                 && projectile.Position.Y >= 0
-                && projectile.Position.Y <= LevelMap.LevelHeight - 1
+                && projectile.Position.Y <= LevelMapManager.LevelHeight - 1
                 && projectile.Position != _tank.Position)
             {
                 _renderer.EraseAtMapCoordinate(projectileLastPosition);
@@ -358,20 +331,20 @@ internal class Game
             };
 
             if (projectile.Position.X < 0
-                || projectile.Position.X > LevelMap.LevelWidth
+                || projectile.Position.X > LevelMapManager.LevelWidth
                 || projectile.Position.Y < 0
-                || projectile.Position.Y > LevelMap.LevelHeight)
+                || projectile.Position.Y > LevelMapManager.LevelHeight)
             {
                 projectilesToRemove.Add(projectile);
 
                 continue;
             }
 
-            if (!_map.IsProjectilePassable(projectile.Position))
+            if (!_levelMapManager.IsProjectilePassable(projectile.Position))
             {
-                if (_map.IsDamageable(projectile.Position))
+                if (_levelMapManager.IsDamageable(projectile.Position))
                 {
-                    _map.Damage(projectile.Position);
+                    _levelMapManager.Damage(projectile.Position);
                     _renderer.EraseAtMapCoordinate(projectile.Position);
                 }
 
