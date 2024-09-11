@@ -2,7 +2,12 @@
 
 namespace XyzTanks.Units;
 
-internal class Projectile
+public class Projectile : IUpdateable
 {
     public Transform Transform { get; } = new Transform();
+
+    public void Update(double deltaSeconds)
+    {
+        
+    }
 }

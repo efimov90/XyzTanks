@@ -1,5 +1,7 @@
-﻿using XyzTanks.Engine;
+﻿using Microsoft.Extensions.DependencyInjection;
+using XyzTanks.Engine;
 using XyzTanks.Extensions;
+using XyzTanks.Units;
 
 namespace XyzTanks.Map;
 public class LevelMapManager : ILevelMapManager
@@ -10,10 +12,19 @@ public class LevelMapManager : ILevelMapManager
 
     private IList<IList<StaticObject>> _map;
 
+    private readonly List<EnemyTank> _enemyTanks = new();
+    private readonly List<Projectile> _projectiles = new();
+    private readonly IServiceProvider _serviceProvider;
+
     public IList<IList<StaticObject>> Map => _map;
 
-    public LevelMapManager()
+    public List<EnemyTank> EnemyTanks => _enemyTanks;
+    public List<Projectile> Projectiles => _projectiles;
+
+    public LevelMapManager(IServiceProvider serviceProvider)
     {
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
         _map = new List<IList<StaticObject>>(LevelHeight);
 
         for (int i = 0; i < LevelHeight; i++)
@@ -55,7 +66,8 @@ public class LevelMapManager : ILevelMapManager
 
     public bool IsWalkableAtCoordinate(int x, int y) =>
         IsOnMap(x, y)
-        && _map[x][y] == StaticObject.Empty;
+        && _map[x][y] == StaticObject.Empty
+        && !_enemyTanks.Any(et => et.Transform.Position.X == x && et.Transform.Position.Y == y);
 
     private static bool IsOnMap(int x, int y) =>
         x >= 0
@@ -106,5 +118,43 @@ public class LevelMapManager : ILevelMapManager
         while (!IsWalkableAtCoordinate(x, y));
 
         return new Vector2Int(x, y);
+    }
+
+    public void Update(double deltaSeconds)
+    {
+        UpdateProjectiles(deltaSeconds);
+        UpdateEnemyTanks(deltaSeconds);
+    }
+
+    public void SpawnProjectile(Vector2Int position, Orientation orientation)
+    {
+        var projectile = _serviceProvider.GetRequiredService<Projectile>();
+
+        projectile.Transform.Position = position;
+        projectile.Transform.Orientation = orientation;
+
+        _projectiles.Add(projectile);
+    }
+
+    private void UpdateEnemyTanks(double deltaSeconds)
+    {
+        foreach(var tank in _enemyTanks)
+        {
+            tank.Update(deltaSeconds);
+        }
+    }
+
+    private void UpdateProjectiles(double deltaSeconds)
+    {
+        foreach (var projectile in _projectiles)
+        {
+            projectile.Update(deltaSeconds);
+        }
+    }
+
+    public void Clear()
+    {
+        _projectiles.Clear();
+        _enemyTanks.Clear();
     }
 }

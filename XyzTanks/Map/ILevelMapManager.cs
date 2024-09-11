@@ -1,10 +1,14 @@
 ﻿using XyzTanks.Engine;
+using XyzTanks.Units;
 
 namespace XyzTanks.Map;
-public interface ILevelMapManager
+public interface ILevelMapManager : IUpdateable
 {
     IList<IList<StaticObject>> Map { get; }
+    List<EnemyTank> EnemyTanks { get; }
+    List<Projectile> Projectiles { get; }
 
+    void Clear();
     void Damage(int x, int y);
     void Damage(Vector2Int position);
     Vector2Int GetRandomTankPosition();
@@ -17,4 +21,5 @@ public interface ILevelMapManager
     void LoadLevel(string name);
     void Set(int x, int y, StaticObject staticObject);
     void Set(Vector2Int position, StaticObject staticObject);
+    void SpawnProjectile(Vector2Int position, Orientation orientation);
 }
