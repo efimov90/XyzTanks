@@ -1,6 +1,8 @@
 ﻿using System.Numerics;
+using XyzTanks.Engine;
+using XyzTanks.Map;
 
-namespace XyzTanks;
+namespace XyzTanks.Units;
 public class EnemyTank : Tank, IUpdateable
 {
     private readonly ILevelMapManager _levelMapManager;
@@ -12,7 +14,7 @@ public class EnemyTank : Tank, IUpdateable
 
     public void Update(double deltaSeconds)
     {
-        
+
     }
 
     public List<Vector2> GetPossibleDirections()

@@ -1,6 +1,8 @@
 ﻿using System.Numerics;
+using XyzTanks.Engine;
+using XyzTanks.Map;
 
-namespace XyzTanks;
+namespace XyzTanks.Rendering;
 internal class ConsoleRenderer : IRenderer, IDisposable
 {
     private const char _wallCharacter = '█';
@@ -96,7 +98,7 @@ internal class ConsoleRenderer : IRenderer, IDisposable
         {
             Console.SetCursorPosition(positionCoordinateX, y);
 
-            for (var x = positionCoordinateX; x < positionCoordinateX +  _tileSizeX; x++)
+            for (var x = positionCoordinateX; x < positionCoordinateX + _tileSizeX; x++)
             {
                 Console.ForegroundColor = MapColorFromStaticObject(_levelMapManager.Map[x / _tileSizeX][y / _tileSizeY]);
                 Console.Write(MapCharacterFromStaticObject(_levelMapManager.Map[x / _tileSizeX][y / _tileSizeY]));

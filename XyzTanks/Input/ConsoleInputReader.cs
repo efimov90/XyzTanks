@@ -1,4 +1,4 @@
-﻿namespace XyzTanks;
+﻿namespace XyzTanks.Input;
 internal partial class ConsoleInputReader : IInputReader
 {
     public event EventHandler<InputEventArgs> InputActionCalled = null!;

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace XyzTanks;
+namespace XyzTanks.Map;
 public interface ILevelMapManager
 {
     IList<IList<StaticObject>> Map { get; }

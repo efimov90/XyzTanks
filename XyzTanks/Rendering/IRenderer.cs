@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
+using XyzTanks.Engine;
 
-namespace XyzTanks;
+namespace XyzTanks.Rendering;
 public interface IRenderer
 {
     void DrawProjectileAt(Vector2 position);

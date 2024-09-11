@@ -1,10 +1,10 @@
-﻿namespace XyzTanks;
+﻿namespace XyzTanks.Rendering;
 internal class ShowTextState
 {
     public void RenderGameOverScreen(bool win)
     {
         Console.Clear();
-        if(win)
+        if (win)
         {
             Console.WriteLine("You win!");
         }

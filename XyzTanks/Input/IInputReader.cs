@@ -1,4 +1,4 @@
-﻿namespace XyzTanks;
+﻿namespace XyzTanks.Input;
 internal interface IInputReader
 {
     event EventHandler<InputEventArgs> InputActionCalled;

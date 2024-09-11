@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
+using XyzTanks.Engine;
 
-namespace XyzTanks;
+namespace XyzTanks.Units;
 public class Tank
 {
     public Vector2 Position { get; set; }
@@ -48,7 +49,7 @@ public class Tank
 
     internal Orientation GetNextOrientationByNextPosition(Vector2 nextPosition)
     {
-        if(nextPosition == Upper)
+        if (nextPosition == Upper)
         {
             return Orientation.Up;
         }
@@ -56,11 +57,11 @@ public class Tank
         {
             return Orientation.Down;
         }
-        else if(nextPosition == Lefter)
+        else if (nextPosition == Lefter)
         {
             return Orientation.Left;
         }
-        else if(nextPosition == Righter)
+        else if (nextPosition == Righter)
         {
             return Orientation.Right;
         }

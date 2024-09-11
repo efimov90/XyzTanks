@@ -1,4 +1,4 @@
-﻿namespace XyzTanks;
+﻿namespace XyzTanks.Map;
 
 public enum StaticObject
 {

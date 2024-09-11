@@ -1,7 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Numerics;
+using XyzTanks.Input;
+using XyzTanks.Map;
+using XyzTanks.Rendering;
+using XyzTanks.Units;
 
-namespace XyzTanks;
+namespace XyzTanks.Engine;
 internal class Game
 {
     private readonly Random _random = new Random(DateTime.Now.Second);
@@ -70,7 +74,7 @@ internal class Game
 
                 var position = _levelMapManager.GetRandomTankPosition();
 
-                while(_enemyTanks.Any(et => et.Position == position) || _tank.Position == position)
+                while (_enemyTanks.Any(et => et.Position == position) || _tank.Position == position)
                 {
                     position = _levelMapManager.GetRandomTankPosition();
                 }
@@ -189,7 +193,7 @@ internal class Game
         UpdatePlayerTank();
         UpdateEnemiesTanks();
 
-        if(_enemyTanks.Count == 0)
+        if (_enemyTanks.Count == 0)
         {
             _level++;
             LoadLevel();
@@ -205,7 +209,7 @@ internal class Game
         var listEnemyToDispose = new List<EnemyTank>();
         var listProjectilesToRemove = new List<Projectile>();
 
-        foreach(var enemy in _enemyTanks)
+        foreach (var enemy in _enemyTanks)
         {
             UpdateEnemyTank(listEnemyToDispose, listProjectilesToRemove, enemy);
         }
@@ -228,12 +232,12 @@ internal class Game
             }
         }
 
-        if((enemy.Position.X == _tank.Position.X
-                && ((enemy.Orientation == Orientation.Up && enemy.Position.Y > _tank.Position.Y)
-                    || (enemy.Orientation == Orientation.Down && enemy.Position.Y < _tank.Position.Y)))
-            || (enemy.Position.Y == _tank.Position.Y
-                && ((enemy.Orientation == Orientation.Left && enemy.Position.X > _tank.Position.X)
-                    || (enemy.Orientation == Orientation.Right && enemy.Position.X < _tank.Position.X))))
+        if (enemy.Position.X == _tank.Position.X
+                && (enemy.Orientation == Orientation.Up && enemy.Position.Y > _tank.Position.Y
+                    || enemy.Orientation == Orientation.Down && enemy.Position.Y < _tank.Position.Y)
+            || enemy.Position.Y == _tank.Position.Y
+                && (enemy.Orientation == Orientation.Left && enemy.Position.X > _tank.Position.X
+                    || enemy.Orientation == Orientation.Right && enemy.Position.X < _tank.Position.X))
         {
             SpawnProjectile(enemy.Position, enemy.Orientation);
         }
@@ -254,10 +258,10 @@ internal class Game
             nextPosition = nextPossiblePositions[_random.Next(nextPossiblePositions.Count)];
             enemy.Orientation = enemy.GetNextOrientationByNextPosition(nextPosition);
         }
-        else if(nextPossiblePositions.Count == 2 && !_levelMapManager.IsWalkableAtCoordinate(nextDefaultPosition))
+        else if (nextPossiblePositions.Count == 2 && !_levelMapManager.IsWalkableAtCoordinate(nextDefaultPosition))
         {
             nextPosition = nextPossiblePositions.Where(x => x != enemy.GetOppositeDirectionPosition()).First();
-            
+
         }
         else if (nextPossiblePositions.Count == 1)
         {
@@ -275,13 +279,13 @@ internal class Game
         _renderer.DrawTank(enemy.Position, enemy.Orientation);
     }
 
-    
+
 
     private void UpdatePlayerTank()
     {
         var listProjectilesToRemove = new List<Projectile>();
 
-        if(_lastTankPosition != _tank.Position)
+        if (_lastTankPosition != _tank.Position)
         {
             _renderer.EraseAtMapCoordinate(_lastTankPosition);
         }

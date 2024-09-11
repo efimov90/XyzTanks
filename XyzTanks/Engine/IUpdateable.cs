@@ -1,4 +1,4 @@
-﻿namespace XyzTanks;
+﻿namespace XyzTanks.Engine;
 
 public interface IUpdateable
 {

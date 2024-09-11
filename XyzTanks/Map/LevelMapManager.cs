@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
+using XyzTanks.Extensions;
 
-namespace XyzTanks;
+namespace XyzTanks.Map;
 public class LevelMapManager : ILevelMapManager
 {
     private readonly Random _random = new Random(DateTime.Now.Second);
