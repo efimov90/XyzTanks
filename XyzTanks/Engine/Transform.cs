@@ -1,7 +1,22 @@
 ﻿namespace XyzTanks.Engine;
 public class Transform
 {
-    public Vector2Int Position { get; set; }
+    private Vector2Int _position;
+
+    public Vector2Int Position
+    {
+        get => _position;
+        set
+        {
+            if(_position != value)
+            {
+                PreviousPosition = _position;
+                _position = value;
+            }
+        }
+    }
+
+    public Vector2Int? PreviousPosition { get; set; }
     public Orientation Orientation { get; set; }
 
     public Vector2Int Upper => Position + Vector2Int.Up;
@@ -47,6 +62,4 @@ public class Transform
         Orientation.Left => Righter,
         _ => throw new InvalidOperationException("Невозможное состояние")
     };
-
-
 }

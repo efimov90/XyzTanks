@@ -173,7 +173,7 @@ internal class Game
 
         _inputReader.Update();
 
-        UpdateProjectiles();
+        _levelMapManager.Update(totalSeconds);
         UpdatePlayerTank();
         UpdateEnemiesTanks();
 
@@ -288,59 +288,5 @@ internal class Game
         _renderer.DrawTank(_tank.Transform.Position, _tank.Transform.Orientation, true);
 
         _lastTankPosition = _tank.Transform.Position;
-    }
-
-    private void UpdateProjectiles()
-    {
-        var projectilesToRemove = new List<Projectile>();
-
-        foreach (var projectile in _levelMapManager.Projectiles)
-        {
-            var projectileLastPosition = projectile.Transform.Position;
-
-            if (projectile.Transform.Position.X >= 0
-                && projectile.Transform.Position.X <= LevelMapManager.LevelWidth - 1
-                && projectile.Transform.Position.Y >= 0
-                && projectile.Transform.Position.Y <= LevelMapManager.LevelHeight - 1
-                && projectile.Transform.Position != _tank.Transform.Position)
-            {
-                _renderer.EraseAtMapCoordinate(projectileLastPosition);
-            }
-
-            projectile.Transform.Position = projectile.Transform.Orientation switch
-            {
-                Orientation.Up => projectile.Transform.Upper,
-                Orientation.Down => projectile.Transform.Lower,
-                Orientation.Left => projectile.Transform.Lefter,
-                Orientation.Right => projectile.Transform.Righter,
-                _ => throw new InvalidOperationException("Невозможное состояние")
-            };
-
-            if (projectile.Transform.Position.X < 0
-                || projectile.Transform.Position.X > LevelMapManager.LevelWidth
-                || projectile.Transform.Position.Y < 0
-                || projectile.Transform.Position.Y > LevelMapManager.LevelHeight)
-            {
-                projectilesToRemove.Add(projectile);
-
-                continue;
-            }
-
-            if (!_levelMapManager.IsProjectilePassable(projectile.Transform.Position))
-            {
-                if (_levelMapManager.IsDamageable(projectile.Transform.Position))
-                {
-                    _levelMapManager.Damage(projectile.Transform.Position);
-                    _renderer.EraseAtMapCoordinate(projectile.Transform.Position);
-                }
-
-                projectilesToRemove.Add(projectile);
-                continue;
-            }
-
-            _renderer.DrawProjectileAt(projectile.Transform.Position);
-        }
-
-        _levelMapManager.Projectiles.RemoveAll(projectilesToRemove.Contains);
     }
 }

@@ -8,6 +8,8 @@ public interface ILevelMapManager : IUpdateable
     List<EnemyTank> EnemyTanks { get; }
     List<Projectile> Projectiles { get; }
 
+    event EventHandler<RedrawRequiredAtArgs> RedrawRequired;
+
     void Clear();
     void Damage(int x, int y);
     void Damage(Vector2Int position);

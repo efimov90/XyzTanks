@@ -43,7 +43,25 @@ internal class ConsoleRenderer : IRenderer, IDisposable
     public ConsoleRenderer(ILevelMapManager levelMapManager)
     {
         _levelMapManager = levelMapManager ?? throw new ArgumentNullException(nameof(levelMapManager));
+        _levelMapManager.RedrawRequired += OnRedrawRequested;
         Console.CursorVisible = false;
+    }
+
+    private void OnRedrawRequested(object? sender, RedrawRequiredAtArgs e)
+    {
+        switch (e.RedrawType)
+        {
+            case RedrawType.StaticObject:
+                EraseAtMapCoordinate(e.Position);
+                break;
+            case RedrawType.Projectile:
+                DrawProjectileAt(e.Position);
+                break;
+            case RedrawType.PlayerTank:
+                break;
+            case RedrawType.EnemyTank:
+                break;
+        }
     }
 
     public void RenderWalls()
@@ -88,8 +106,8 @@ internal class ConsoleRenderer : IRenderer, IDisposable
 
     public void EraseAtMapCoordinate(Vector2Int coordinate)
     {
-        var positionCoordinateX = (int)coordinate.X * _tileSizeX;
-        var positionCoordinateY = (int)coordinate.Y * _tileSizeY;
+        var positionCoordinateX = coordinate.X * _tileSizeX;
+        var positionCoordinateY = coordinate.Y * _tileSizeY;
 
         Console.SetCursorPosition(positionCoordinateX, positionCoordinateY);
 
@@ -124,8 +142,8 @@ internal class ConsoleRenderer : IRenderer, IDisposable
 
         var tankStartRenderPoint = position * new Vector2Int(_tileSizeX, _tileSizeY);
 
-        int x = (int)tankStartRenderPoint.X;
-        int y = (int)tankStartRenderPoint.Y;
+        int x = tankStartRenderPoint.X;
+        int y = tankStartRenderPoint.Y;
 
         var tiles = GetTilesForOrientation(tankOrientation);
 
@@ -138,7 +156,7 @@ internal class ConsoleRenderer : IRenderer, IDisposable
                 Console.Write(tiles[y % _tileSizeY][x % _tileSizeX]);
             }
 
-            x = (int)tankStartRenderPoint.X;
+            x = tankStartRenderPoint.X;
         }
 
         Console.ResetColor();
@@ -157,8 +175,8 @@ internal class ConsoleRenderer : IRenderer, IDisposable
     {
         var tankStartRenderPoint = position * new Vector2Int(_tileSizeX, _tileSizeY);
 
-        int x = (int)tankStartRenderPoint.X;
-        int y = (int)tankStartRenderPoint.Y;
+        int x = tankStartRenderPoint.X;
+        int y = tankStartRenderPoint.Y;
 
         Console.SetCursorPosition(x, y);
 

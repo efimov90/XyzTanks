@@ -21,10 +21,11 @@ public class LevelMapManager : ILevelMapManager
     public List<EnemyTank> EnemyTanks => _enemyTanks;
     public List<Projectile> Projectiles => _projectiles;
 
+    public event EventHandler<RedrawRequiredAtArgs> RedrawRequired = null!;
+
     public LevelMapManager(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-
         _map = new List<IList<StaticObject>>(LevelHeight);
 
         for (int i = 0; i < LevelHeight; i++)
@@ -68,6 +69,9 @@ public class LevelMapManager : ILevelMapManager
         IsOnMap(x, y)
         && _map[x][y] == StaticObject.Empty
         && !_enemyTanks.Any(et => et.Transform.Position.X == x && et.Transform.Position.Y == y);
+
+    private static bool IsOnMap(Vector2Int vector) =>
+        IsOnMap(vector.X, vector.Y);
 
     private static bool IsOnMap(int x, int y) =>
         x >= 0
@@ -146,10 +150,42 @@ public class LevelMapManager : ILevelMapManager
 
     private void UpdateProjectiles(double deltaSeconds)
     {
-        foreach (var projectile in _projectiles)
+        var projectilesToRemove = new List<Projectile>();
+
+        foreach (var projectile in Projectiles)
         {
             projectile.Update(deltaSeconds);
+
+            if(projectile.Transform.PreviousPosition != null)
+            {
+                RedrawRequired?.Invoke(this, new RedrawRequiredAtArgs(projectile.Transform.PreviousPosition.Value, RedrawType.StaticObject));
+            }
+
+            if (!projectile.IsAlive)
+            {
+                projectilesToRemove.Add(projectile);
+
+                if (IsOnMap(projectile.Transform.Position))
+                {
+                    RedrawRequired?.Invoke(this, new RedrawRequiredAtArgs(projectile.Transform.Position, RedrawType.StaticObject));
+                }
+
+                var tankToDamage = EnemyTanks.FirstOrDefault(et => et.Transform.Position == projectile.Transform.Position);
+
+                if (tankToDamage != null)
+                {
+                    tankToDamage.Health--;
+                }
+
+                projectile.Dispose();
+            }
+            else
+            {
+                RedrawRequired?.Invoke(this, new RedrawRequiredAtArgs(projectile.Transform.Position, RedrawType.Projectile));
+            }
         }
+
+        Projectiles.RemoveAll(projectilesToRemove.Contains);
     }
 
     public void Clear()
